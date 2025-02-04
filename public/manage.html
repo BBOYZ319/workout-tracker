@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="community.css">
+    <title>Create/Manage Community</title>
+    <script>
+        async function fetchAllCommunities() {
+            const response = await fetch('http://localhost:5000/communities');
+            if (!response.ok) {
+                alert('Failed to fetch communities');
+                return;
+            }
+            const communities = await response.json();
+
+            const list = document.getElementById('community-list');
+            list.innerHTML = '';
+            communities.forEach(community => {
+                const item = document.createElement('li');
+                item.textContent = `${community.name}: ${community.description}`;
+                list.appendChild(item);
+            });
+        }
+
+        async function searchCommunityByName() {
+            const name = document.getElementById('search-name').value;
+            if (!name) {
+                alert('Please enter a name to search');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:5000/communities/${name}`);
+            const searchResult = document.getElementById('search-result');
+            searchResult.innerHTML = '';
+
+            if (response.status === 404) {
+                searchResult.textContent = 'No community found';
+            } else if (response.ok) {
+                const result = await response.json();
+                result.forEach(community => {
+                    const item = document.createElement('li');
+                    item.textContent = `${community.name}: ${community.description}`;
+                    searchResult.appendChild(item);
+                });
+            } else {
+                searchResult.textContent = 'An error occurred while searching';
+            }
+        }
+
+        async function addCommunity() {
+            const name = document.getElementById('add-name').value;
+            const description = document.getElementById('add-description').value;
+
+            if (!name || !description) {
+                alert('Please provide name and description');
+                return;
+            }
+
+            const response = await fetch('http://localhost:5000/communities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Community added successfully with ID: ${result.id}`);
+                fetchAllCommunities();
+            } else {
+                alert('Failed to add community');
+            }
+        }
+
+        async function updateCommunity() {
+            const id = document.getElementById('update-id').value;
+            const name = document.getElementById('update-name').value;
+            const description = document.getElementById('update-description').value;
+
+            if (!id) {
+                alert('Community ID is required');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:5000/communities/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description }),
+            });
+
+            if (response.ok) {
+                alert('Community updated successfully');
+                fetchAllCommunities();
+            } else {
+                alert('Failed to update community');
+            }
+        }
+
+        async function deleteCommunity() {
+            const id = document.getElementById('delete-id').value;
+
+            if (!id) {
+                alert('Community ID is required');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:5000/communities/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (response.ok) {
+                alert('Community deleted successfully');
+                fetchAllCommunities();
+            } else {
+                alert('Failed to delete community');
+            }
+        }
+        window.onload = fetchAllCommunities;
+    </script>
+</head>
+<body>
+    <h1>Create/Manage Community</h1>
+    <button onclick="location.href='community.html'">Back to Community</button>
+
+    <section>
+        <h2>All Communities</h2>
+        <ul id="community-list"></ul>
+    </section>
+
+    <section>
+        <h2>Add Community</h2>
+        <label for="add-name">Name:</label>
+        <input type="text" id="add-name" />
+        <label for="add-description">Description:</label>
+        <input type="text" id="add-description" />
+        <button onclick="addCommunity()">Add Community</button>
+    </section>
+
+    <section>
+        <h2>Update Community</h2>
+        <label for="update-id">Community ID:</label>
+        <input type="text" id="update-id" />
+        <label for="update-name">Name:</label>
+        <input type="text" id="update-name" />
+        <label for="update-description">Description:</label>
+        <input type="text" id="update-description" />
+        <button onclick="updateCommunity()">Update Community</button>
+    </section>
+
+    <section>
+        <h2>Delete Community</h2>
+        <label for="delete-id">Community ID:</label>
+        <input type="text" id="delete-id" />
+        <button onclick="deleteCommunity()">Delete Community</button>
+    </section>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="dashboard.css">
+    <title>Dashboard</title>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome to Your Workout Tracker</h2>
+        <a href="activities.html">Activities</a>
+        <a href="leaderboards.html">Leaderboard</a>
+        <a href="community.html">Community</a>
+        <a href="profile.html">Profile</a>
+        <a href="friends.html">Friends</a>
+        
+        <h3>Berita Seputar Workout</h3>
+        <div id="news-container"></div>
+
+        <button onclick="location.href='index.html'">Logout</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const API_KEY = 'e05619bd03ad8a8dd93d5d97a0869762'; 
+const BASE_URL = 'https://gnews.io/api/v4/search?q=workout&token=';
+const MAX_ARTICLES = 4; 
+
+async function fetchWorkoutNews() {
+    const url = `${BASE_URL}${API_KEY}`;
+    try {
+        const response = await axios.get(url);
+        if (response.data && response.data.articles) {
+            const limitedArticles = response.data.articles.slice(0, MAX_ARTICLES); 
+            displayNews(limitedArticles);
+        } else {
+            console.error('No articles found');
+            document.getElementById('news-container').innerText = 'No articles found';
+        }
+    } catch (error) {
+        console.error('Error fetching workout news:', error);
+        document.getElementById('news-container').innerText = 'Error fetching news';
+    }
+}
+
+function displayNews(articles) {
+    const newsContainer = document.getElementById('news-container');
+    newsContainer.innerHTML = '';
+    newsContainer.style.display = 'flex'; 
+    newsContainer.style.flexWrap = 'wrap'; 
+    newsContainer.style.gap = '1rem'; 
+
+    articles.forEach(article => {
+        const articleDiv = document.createElement('div');
+        articleDiv.classList.add('news-article');
+
+        if (article.image) {
+            const image = document.createElement('img');
+            image.src = article.image; 
+            image.alt = article.title; 
+            image.classList.add('news-image'); 
+            articleDiv.appendChild(image);
+        }
+
+        const title = document.createElement('div');
+        title.classList.add('news-title');
+        title.innerText = article.title;
+
+        const description = document.createElement('div');
+        description.classList.add('news-description');
+        description.innerText = article.description || 'No description available'; 
+
+        const link = document.createElement('a');
+        link.href = article.url;
+        link.target = '_blank';
+        link.innerText = 'Read more';
+
+        articleDiv.appendChild(title);
+        articleDiv.appendChild(description);
+        articleDiv.appendChild(link);
+        newsContainer.appendChild(articleDiv);
+    });
+}
+fetchWorkoutNews();
+
+
+       
+    </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="community.css">
+    <title>Search Community</title>
+    <script>
+        async function searchCommunityByName() {
+            const name = document.getElementById('search-name').value;
+            if (!name) {
+                alert('Please enter a name to search');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:5000/communities/${name}`);
+            const searchResult = document.getElementById('search-result');
+            searchResult.innerHTML = '';
+
+            if (response.status === 404) {
+                searchResult.textContent = 'No community found';
+            } else if (response.ok) {
+                const result = await response.json();
+                result.forEach(community => {
+                    const item = document.createElement('li');
+                    item.textContent = `${community.name}: ${community.description}`;
+                    searchResult.appendChild(item);
+                });
+            } else {
+                searchResult.textContent = 'An error occurred while searching';
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Search Community</h1>
+    <button onclick="location.href='community.html'">Back to Community</button>
+
+    <section>
+        <label for="search-name">Enter Community Name:</label>
+        <input type="text" id="search-name" />
+        <button onclick="searchCommunityByName()">Search</button>
+        <ul id="search-result"></ul>
+    </section>
+</body>
+</html>

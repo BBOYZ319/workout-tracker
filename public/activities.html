@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="activity.css">
+    <title>Activity Manager</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Activity Manager</h1>
+
+        <button onclick="goToDashboard()">Back to Dashboard</button>
+
+        <h2>Add Activity</h2>
+        <input type="text" id="name" placeholder="Name">
+        <input type="text" id="target" placeholder="Target">
+        <button onclick="addActivity()">Add Activity</button>
+
+        <h2>Update Leaderboard</h2>
+        <input type="text" id="username" placeholder="Username">
+        <button onclick="updateLeaderboard()">Update Leaderboard</button>
+
+        <h2>Activities</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Target</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="activities">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let activityCount = 0;
+
+        async function fetchActivities() {
+            const response = await fetch('http://localhost:5000/activities');
+            const activities = await response.json();
+            const tbody = document.getElementById('activities');
+            tbody.innerHTML = '';
+            activities.forEach(activity => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${activity.id}</td>
+                    <td>${activity.name}</td>
+                    <td>${activity.date}</td>
+                    <td>${activity.target}</td>
+                    <td>
+                        <button onclick="deleteActivity(${activity.id})">Delete</button>
+                        <button onclick="updateActivity(${activity.id})">Update</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            activityCount = activities.length;
+        }
+
+        async function addActivity() {
+            const name = document.getElementById('name').value;
+            const target = document.getElementById('target').value;
+            const date = new Date().toISOString().split('T')[0];
+
+            const response = await fetch('http://localhost:5000/activities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, date, target })
+            });
+
+            if (response.ok) {
+                alert('Activity added successfully!');
+                fetchActivities();
+            } else {
+                alert('Failed to add activity.');
+            }
+        }
+
+        async function deleteActivity(id) {
+            const response = await fetch(`http://localhost:5000/activities/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Activity deleted successfully!');
+                fetchActivities();
+            } else {
+                alert('Failed to delete activity.');
+            }
+        }
+
+        async function updateActivity(id) {
+            const name = prompt('Enter new name:');
+            const date = new Date().toISOString().split('T')[0];
+            const target = prompt('Enter new target:');
+
+            const response = await fetch(`http://localhost:5000/activities/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, date, target })
+            });
+
+            if (response.ok) {
+                alert('Activity updated successfully!');
+                fetchActivities();
+            } else {
+                alert('Failed to update activity.');
+            }
+        }
+
+        async function updateLeaderboard() {
+            const username = document.getElementById('username').value;
+            const date = new Date().toISOString().split('T')[0];
+            const score = activityCount;
+
+            const response = await fetch('http://localhost:5000/leaderboards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, date, score })
+            });
+
+            if (response.ok) {
+                alert('Leaderboard updated successfully!');
+            } else {
+                alert('Failed to update leaderboard.');
+            }
+        }
+
+        function goToDashboard() {
+            document.getElementById('name').value = '';
+            document.getElementById('target').value = '';
+            document.getElementById('username').value = '';
+            const tbody = document.getElementById('activities');
+            tbody.innerHTML = '';
+            activityCount = 0;
+
+            alert('Returning to the dashboard. Data has been reset.');
+            window.location.href = 'dashboard.html'; 
+        }
+
+        fetchActivities();
+    </script>
+</body>
+</html>

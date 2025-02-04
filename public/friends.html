@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="friend.css">
+    <title>Friend Management</title>
+    <script>
+        let selectedUserId = null;
+
+        async function fetchAllFriends() {
+            const noFriendsMessage = document.getElementById('no-friends-message');
+            const tbody = document.getElementById('friend-list');
+            tbody.innerHTML = '';
+
+            try {
+                const response = await fetch('http://localhost:5000/friends');
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch friends');
+                }
+
+                const friends = await response.json();
+
+                if (!friends || friends.length === 0) {
+                    noFriendsMessage.style.display = 'block';
+                    return;
+                }
+
+                noFriendsMessage.style.display = 'none';
+                friends.forEach(friend => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${friend.id}</td>
+                        <td>${friend.username}</td>
+                        <td>
+                            <button onclick="deleteFriend(${friend.id})">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        window.onload = fetchAllFriends;
+
+        async function searchFriendByUsername() {
+            const username = document.getElementById('search-username').value.trim();
+            const searchResult = document.getElementById('search-result');
+            searchResult.innerHTML = '';
+
+            if (!username) {
+                alert('Please enter a username to search');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5000/friends/${username}`);
+
+                if (response.status === 404) {
+                    searchResult.textContent = 'No user found';
+                    selectedUserId = null;
+                } else if (response.ok) {
+                    const result = await response.json();
+                    const item = document.createElement('li');
+                    item.textContent = `ID: ${result.id}, Username: ${result.username}`;
+                    searchResult.appendChild(item);
+                    selectedUserId = result.id;
+                } else {
+                    throw new Error('An error occurred while searching');
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                selectedUserId = null;
+            }
+        }
+
+        async function addFriend() {
+            const usernameInput = document.getElementById('search-username');
+
+            if (!selectedUserId) {
+                alert('Please search and select a user before adding as a friend');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/friends', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: selectedUserId, username: usernameInput.value }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add friend');
+                }
+
+                alert('Friend added successfully');
+                fetchAllFriends();
+
+                usernameInput.value = '';
+                document.getElementById('search-result').innerHTML = '';
+                selectedUserId = null;
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function deleteFriend(id) {
+            try {
+                const response = await fetch(`http://localhost:5000/friends/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete friend');
+                }
+
+                alert('Friend deleted successfully');
+                fetchAllFriends();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function navigateToDashboard() {
+            window.location.href = 'dashboard.html'; 
+        }
+    </script>
+</head>
+<body>
+    <h1>Friend Management</h1>
+
+    <button onclick="navigateToDashboard()">Back to Dashboard</button>
+
+    <section>
+        <h2>Search Friend</h2>
+        <label for="search-username">Enter Username:</label>
+        <input type="text" id="search-username" />
+        <button onclick="searchFriendByUsername()">Search</button>
+        <ul id="search-result"></ul>
+    </section>
+    
+    <section>
+        <h2>Add Friend</h2>
+        <button onclick="addFriend()">Add Selected Friend</button>
+    </section>
+</body>
+</html>
+
+
+    <section>
+        <h2>All Friends</h2>
+        <p id="no-friends-message" style="display: none;">No friends found.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="friend-list"></tbody>
+        </table>
+    </section>
+    
+   

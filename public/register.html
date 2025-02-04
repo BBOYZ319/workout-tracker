@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="form.css">
+    <title>Register</title>
+</head>
+<body>
+    <h2>Register</h2>
+    <form id="registerForm">
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="password" id="PIN" placeholder="PIN" required>
+        <input type="date" id="tanggal_lahir" placeholder="Tanggal Lahir" required>
+        <input type="text" id="tempat_tinggal" placeholder="Tempat Tinggal" required>
+        <button type="submit">Register</button>
+    </form>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const PIN = document.getElementById('PIN').value;
+            const tanggal_lahir = document.getElementById('tanggal_lahir').value;
+            const tempat_tinggal = document.getElementById('tempat_tinggal').value;
+
+            const response = await fetch('http://localhost:5000/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password, PIN, tanggal_lahir, tempat_tinggal })
+            });
+
+            if (response.ok) {
+                alert('Registration successful!');
+                window.location.href = 'login.html'; 
+            } else {
+                const errorMessage = await response.text();
+                alert(`Registration failed: ${errorMessage}`);
+            }
+        });
+    </script>
+</body>
+</html>

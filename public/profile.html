@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="profile.css".css>
+    <title>Profile Page</title>
+</head>
+<body>
+    <h1>User Profile</h1>
+    <button onclick="location.href='dashboard.html'">Back to Dashboard</button>
+
+    <div id="password-form">
+        <h2>Please enter your PIN to view your profile</h2>
+        <input type="password" id="PIN" placeholder="Enter PIN" required>
+        <button onclick="getProfile()">Submit</button>
+    </div>
+
+    <div id="user-profile" style="display: none;">
+        <h3>Your Profile</h3>
+        <p><strong>userId :</strong> <span id="user-id">N/A</span></p>
+        <p><strong>Username:</strong> <span id="user-username">N/A</span></p>
+        <p><strong>Tempat Tinggal:</strong> <span id="user-tempat_tinggal">N/A</span></p>
+        <p><strong>Tanggal Lahir:</strong> <span id="user-tanggal_lahir">N/A</span></p>
+        <button onclick="deleteAccount()">Delete Account</button> 
+    </div>
+
+    <div id="profile-form" style="display: none;">
+        <h2>Edit Profile</h2>
+        <form id="update-form" onsubmit="event.preventDefault(); updateProfile();">
+            <label for="username">Username:</label>
+            <input type="text" id="username" placeholder="Enter your username">
+            <br>
+            <label for="tempat_tinggal">Tempat Tinggal:</label>
+            <input type="text" id="tempat_tinggal" placeholder="Enter your place of residence">
+            <br>
+            <label for="tanggal_lahir">Tanggal Lahir:</label>
+            <input type="date" id="tanggal_lahir">
+            <br><br>
+            <button type="submit">Update Profile</button>
+        </form>
+    </div>
+
+    <script>
+        let userId = null; 
+
+        function getProfile() {
+            const PIN = document.getElementById('PIN').value.trim();
+
+            if (!PIN) {
+                alert('PIN is required');
+                return;
+            }
+
+            fetch(`http://localhost:5000/profile/${PIN}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const user = data[0];
+                        userId = user.id;
+                        
+                        document.getElementById('user-id').textContent = user.id || 'N/A';
+                        document.getElementById('user-username').textContent = user.username || 'N/A';
+                        document.getElementById('user-tempat_tinggal').textContent = user.tempat_tinggal || 'N/A';
+                        document.getElementById('user-tanggal_lahir').textContent = user.tanggal_lahir || 'N/A';
+
+                        document.getElementById('password-form').style.display = 'none';
+                        document.getElementById('user-profile').style.display = 'block';
+                        document.getElementById('profile-form').style.display = 'block';
+                    } else {
+                        alert('Invalid PIN or no data found');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching profile:', error);
+                    alert(`Error fetching profile: ${error.message}`);
+                });
+        }
+
+        function updateProfile() {
+            if (!userId) {
+                alert('You must load the profile first!');
+                return;
+            }
+
+            const username = document.getElementById('username').value.trim();
+            const tempat_tinggal = document.getElementById('tempat_tinggal').value.trim();
+            const tanggal_lahir = document.getElementById('tanggal_lahir').value;
+
+            if (!username && !tempat_tinggal && !tanggal_lahir) {
+                alert('At least one field must be updated');
+                return;
+            }
+
+            const profileData = {
+                username: username || null,
+                tempat_tinggal: tempat_tinggal || null,
+                tanggal_lahir: tanggal_lahir || null,
+            };
+
+            fetch(`http://localhost:5000/profile/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.message === 'Activity updated successfully') {
+                        if (username) document.getElementById('user-username').textContent = username;
+                        if (tempat_tinggal) document.getElementById('user-tempat_tinggal').textContent = tempat_tinggal;
+                        if (tanggal_lahir) document.getElementById('user-tanggal_lahir').textContent = tanggal_lahir;
+
+                        alert('Profile updated successfully!');
+                    } else {
+                        alert('Error updating profile');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating profile:', error);
+                    alert(`Error updating profile: ${error.message}`);
+                });
+        }
+
+        
+        function deleteAccount() {
+            if (!userId) {
+                alert('You must load the profile first!');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                fetch(`http://localhost:5000/profile/${userId}`, {
+                    method: 'DELETE',
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.message === 'User  deleted successfully') {
+                        alert('Your account has been deleted successfully.');
+                        window.location.href = 'index.html'; 
+                    } else {
+                        alert('Error deleting account');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting account:', error);
+                    alert(`Error deleting account: ${error.message}`);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
